@@ -4,7 +4,20 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4"><i class="bi bi-lightbulb"></i> 智能分析</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-lightbulb"></i> 智能分析</h1>
+        <a href="{{ url_for('ai_config.settings') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-gear"></i> AI 设置
+        </a>
+    </div>
+    
+    {% if ai_config %}
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-robot"></i> 
+        <strong>当前 AI 配置：</strong> 
+        {{ ai_config.provider|upper }} - {{ ai_config.model }}
+    </div>
+    {% endif %}
     
     <div class="row">
         <div class="col-md-6">
@@ -32,7 +45,10 @@
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="use_ai">
                             <label class="form-check-label" for="use_ai">
-                                使用 AI 增强分析（需要配置 API Key）
+                                使用 AI 增强分析
+                                {% if not ai_config %}
+                                <a href="{{ url_for('ai_config.settings') }}" class="text-decoration-none">（需要先配置）</a>
+                                {% endif %}
                             </label>
                         </div>
                         
@@ -133,9 +149,14 @@ document.getElementById('analysisForm').addEventListener('submit', async functio
         if (response.ok) {
             displayResult(data);
         } else {
+            // 如果是需要配置 AI 的错误，显示带链接的提示
+            let errorMessage = data.error || '分析失败';
+            if (data.redirect) {
+                errorMessage += ` <a href="${data.redirect}" class="alert-link">立即配置</a>`;
+            }
             resultDiv.innerHTML = `
                 <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle"></i> ${data.error || '分析失败'}
+                    <i class="bi bi-exclamation-triangle"></i> ${errorMessage}
                 </div>
             `;
         }

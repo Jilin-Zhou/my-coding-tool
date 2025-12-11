@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}AI 配置 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="bi bi-robot"></i> AI 分析设置</h1>
+                {% if config %}
+                <form method="POST" action="{{ url_for('ai_config.delete') }}" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('确定要删除当前 AI 配置吗？')">
+                        <i class="bi bi-trash"></i> 删除配置
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('ai_config.save') }}" id="aiConfigForm">
+                        <!-- 供应商选择 -->
+                        <div class="mb-4">
+                            <label for="provider" class="form-label fw-bold">AI 供应商</label>
+                            <select class="form-select" id="provider" name="provider" required>
+                                <option value="">-- 选择供应商 --</option>
+                                {% for key, provider_data in providers.items() %}
+                                <option value="{{ key }}" {% if config and config.provider == key %}selected{% endif %}>
+                                    {{ provider_data.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- API Key 输入 -->
+                        <div class="mb-4">
+                            <label for="api_key" class="form-label fw-bold">API Key</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control font-monospace" id="api_key" name="api_key" 
+                                       placeholder="输入 API Key" required
+                                       value="{{ config.api_key if config else '' }}">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                    <i class="bi bi-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text" id="apiKeyHelp">
+                                <i class="bi bi-info-circle"></i> 请选择供应商以查看获取方式
+                            </div>
+                        </div>
+
+                        <!-- 模型选择 -->
+                        <div class="mb-4" id="modelSelectContainer" style="display: none;">
+                            <label for="model" class="form-label fw-bold">模型</label>
+                            <select class="form-select" id="model" name="model" required>
+                                <option value="">-- 选择模型 --</option>
+                            </select>
+                            <div class="form-text" id="modelDescription"></div>
+                        </div>
+
+                        <!-- 自定义 Base URL（仅 custom 供应商显示） -->
+                        <div class="mb-4" id="baseUrlContainer" style="display: none;">
+                            <label for="base_url" class="form-label fw-bold">Base URL</label>
+                            <input type="url" class="form-control" id="base_url" name="base_url" 
+                                   placeholder="https://your-api-endpoint.com/v1"
+                                   value="{{ config.base_url if config and config.base_url else '' }}">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> 输入兼容 OpenAI API 格式的服务端点
+                            </div>
+                        </div>
+
+                        <!-- 自定义模型名称（仅 custom 供应商显示） -->
+                        <div class="mb-4" id="customModelContainer" style="display: none;">
+                            <label for="custom_model" class="form-label fw-bold">模型名称</label>
+                            <input type="text" class="form-control" id="custom_model" 
+                                   placeholder="例如：gpt-3.5-turbo">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> 输入自定义模型的名称
+                            </div>
+                        </div>
+
+                        <!-- 测试连接按钮 -->
+                        <div class="mb-4">
+                            <button type="button" class="btn btn-outline-primary" id="testConnectionBtn">
+                                <i class="bi bi-plug"></i> 测试连接
+                            </button>
+                            <div id="testResult" class="mt-2"></div>
+                        </div>
+
+                        <!-- 保存按钮 -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-save"></i> 保存配置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 使用说明 -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 使用说明</h5>
+                </div>
+                <div class="card-body">
+                    <h6>支持的 AI 供应商：</h6>
+                    <ul>
+                        <li><strong>OpenAI</strong>：GPT-4o、GPT-4o Mini 等模型，需要 OpenAI API Key</li>
+                        <li><strong>Google Gemini</strong>：Gemini 1.5 Pro/Flash 等模型，需要 Google AI Studio API Key</li>
+                        <li><strong>OpenRouter</strong>：统一接口访问多个 AI 模型（Claude、GPT、Gemini、Llama 等）</li>
+                        <li><strong>自定义</strong>：任何兼容 OpenAI API 格式的服务</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">配置步骤：</h6>
+                    <ol>
+                        <li>选择 AI 供应商</li>
+                        <li>输入对应的 API Key（点击帮助链接查看获取方式）</li>
+                        <li>选择要使用的模型</li>
+                        <li>点击"测试连接"验证配置</li>
+                        <li>点击"保存配置"应用设置</li>
+                    </ol>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle"></i> 
+                        <strong>安全提示：</strong>API Key 会保存在本地数据库中，请妥善保管您的密钥，不要分享给他人。
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const providers = {{ providers|tojson }};
+let currentProvider = '{{ config.provider if config else "" }}';
+let currentModel = '{{ config.model if config else "" }}';
+
+// 切换 API Key 显示/隐藏
+document.getElementById('toggleApiKey').addEventListener('click', function() {
+    const apiKeyInput = document.getElementById('api_key');
+    const eyeIcon = document.getElementById('eyeIcon');
+    
+    if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        eyeIcon.className = 'bi bi-eye-slash';
+    } else {
+        apiKeyInput.type = 'password';
+        eyeIcon.className = 'bi bi-eye';
+    }
+});
+
+// 供应商改变时更新界面
+document.getElementById('provider').addEventListener('change', function() {
+    const provider = this.value;
+    updateProviderUI(provider);
+});
+
+function updateProviderUI(provider) {
+    if (!provider || !providers[provider]) {
+        document.getElementById('modelSelectContainer').style.display = 'none';
+        document.getElementById('baseUrlContainer').style.display = 'none';
+        document.getElementById('customModelContainer').style.display = 'none';
+        return;
+    }
+
+    const providerData = providers[provider];
+    
+    // 更新 API Key 帮助文本
+    const apiKeyHelp = document.getElementById('apiKeyHelp');
+    apiKeyHelp.innerHTML = `<i class="bi bi-info-circle"></i> ${providerData.api_key_help}`;
+    
+    // 更新 API Key placeholder
+    document.getElementById('api_key').placeholder = providerData.api_key_placeholder || '输入 API Key';
+    
+    // 更新模型选择
+    if (provider === 'custom') {
+        // 自定义供应商：显示 Base URL 和自定义模型输入框
+        document.getElementById('modelSelectContainer').style.display = 'none';
+        document.getElementById('baseUrlContainer').style.display = 'block';
+        document.getElementById('customModelContainer').style.display = 'block';
+        
+        // 将自定义模型输入框的值同步到隐藏的 model select
+        document.getElementById('custom_model').addEventListener('input', function() {
+            // 动态创建选项
+            const modelSelect = document.getElementById('model');
+            modelSelect.innerHTML = `<option value="${this.value}">${this.value}</option>`;
+            modelSelect.value = this.value;
+        });
+        
+        // 如果有保存的模型，设置到自定义输入框
+        if (currentProvider === 'custom' && currentModel) {
+            document.getElementById('custom_model').value = currentModel;
+            document.getElementById('custom_model').dispatchEvent(new Event('input'));
+        }
+    } else {
+        // 预定义供应商：显示模型下拉框
+        document.getElementById('modelSelectContainer').style.display = 'block';
+        document.getElementById('baseUrlContainer').style.display = 'none';
+        document.getElementById('customModelContainer').style.display = 'none';
+        
+        const modelSelect = document.getElementById('model');
+        modelSelect.innerHTML = '<option value="">-- 选择模型 --</option>';
+        
+        providerData.models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = model.name;
+            option.dataset.description = model.description;
+            if (currentProvider === provider && currentModel === model.id) {
+                option.selected = true;
+            }
+            modelSelect.appendChild(option);
+        });
+        
+        // 如果有选中的模型，显示描述
+        if (modelSelect.value) {
+            updateModelDescription(modelSelect.value);
+        }
+    }
+}
+
+// 模型改变时更新描述
+document.getElementById('model').addEventListener('change', function() {
+    updateModelDescription(this.value);
+});
+
+function updateModelDescription(modelId) {
+    const modelSelect = document.getElementById('model');
+    const selectedOption = modelSelect.options[modelSelect.selectedIndex];
+    const description = selectedOption.dataset.description || '';
+    
+    const descDiv = document.getElementById('modelDescription');
+    if (description) {
+        descDiv.innerHTML = `<i class="bi bi-info-circle"></i> ${description}`;
+    } else {
+        descDiv.innerHTML = '';
+    }
+}
+
+// 测试连接
+document.getElementById('testConnectionBtn').addEventListener('click', async function() {
+    const provider = document.getElementById('provider').value;
+    const apiKey = document.getElementById('api_key').value;
+    let model = document.getElementById('model').value;
+    let baseUrl = document.getElementById('base_url').value;
+    
+    // 对于自定义供应商，使用自定义模型输入框的值
+    if (provider === 'custom') {
+        model = document.getElementById('custom_model').value;
+    }
+    
+    if (!provider || !apiKey || !model) {
+        showTestResult(false, '请先填写供应商、API Key 和模型');
+        return;
+    }
+    
+    const btn = this;
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>测试中...';
+    
+    try {
+        const response = await fetch('/ai-config/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                model: model,
+                base_url: baseUrl
+            })
+        });
+        
+        const data = await response.json();
+        showTestResult(data.success, data.message);
+    } catch (error) {
+        showTestResult(false, '请求失败：' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    }
+});
+
+function showTestResult(success, message) {
+    const resultDiv = document.getElementById('testResult');
+    if (success) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-success mb-0">
+                <i class="bi bi-check-circle"></i> ${message}
+            </div>
+        `;
+    } else {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger mb-0">
+                <i class="bi bi-x-circle"></i> ${message}
+            </div>
+        `;
+    }
+}
+
+// 页面加载时，如果有已保存的配置，更新界面
+if (currentProvider) {
+    updateProviderUI(currentProvider);
+}
+</script>
+{% endblock %}
