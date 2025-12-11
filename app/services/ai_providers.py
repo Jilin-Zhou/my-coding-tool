@@ -19,9 +19,9 @@ AI_PROVIDERS = {
         'name': 'Google Gemini',
         'base_url': 'https://generativelanguage.googleapis.com/v1beta',
         'models': [
-            {'id': 'gemini-1.5-pro', 'name': 'Gemini 1.5 Pro', 'description': '最强大'},
-            {'id': 'gemini-1.5-flash', 'name': 'Gemini 1.5 Flash', 'description': '快速响应'},
-            {'id': 'gemini-1.0-pro', 'name': 'Gemini 1.0 Pro', 'description': '稳定可靠'},
+            {'id': 'gemini-2.5-pro', 'name': 'Gemini 2.5 Pro'},
+            {'id': 'gemini-2.5-flash', 'name': 'Gemini 2.5 Flash'},
+            {'id': 'gemini-2.0-pro', 'name': 'Gemini 2.0 Pro'},
         ],
         'api_key_placeholder': 'AIza...',
         'api_key_help': '从 https://aistudio.google.com/apikey 获取'
@@ -37,6 +37,7 @@ AI_PROVIDERS = {
             {'id': 'google/gemini-pro-1.5', 'name': 'Gemini Pro 1.5', 'description': 'Google 模型'},
             {'id': 'meta-llama/llama-3.1-70b-instruct', 'name': 'Llama 3.1 70B', 'description': '开源强模型'},
             {'id': 'deepseek/deepseek-chat', 'name': 'DeepSeek Chat', 'description': '性价比高'},
+            {'id':'qwen/qwen3-coder:free', 'name':'qwen-3-coder', 'description':''}
         ],
         'api_key_placeholder': 'sk-or-...',
         'api_key_help': '从 https://openrouter.ai/keys 获取'

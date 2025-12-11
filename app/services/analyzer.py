@@ -139,13 +139,13 @@ class AIAnalyzer:
         """根据供应商初始化客户端"""
         if not self.config:
             return
-            
+
         provider = self.config.provider
-        
+
         if provider == 'openai':
             from openai import OpenAI
             self.client = OpenAI(api_key=self.config.api_key)
-            
+
         elif provider == 'gemini':
             try:
                 import google.generativeai as genai
@@ -154,7 +154,7 @@ class AIAnalyzer:
             except ImportError:
                 print("警告：google-generativeai 未安装，无法使用 Gemini")
                 self.client = None
-            
+
         elif provider in ['openrouter', 'custom']:
             from openai import OpenAI
             from app.services.ai_providers import AI_PROVIDERS
@@ -163,7 +163,9 @@ class AIAnalyzer:
                 api_key=self.config.api_key,
                 base_url=base_url
             )
+
     
+
     def is_available(self):
         """检查 AI 分析是否可用"""
         return bool(self.config and self.client)
