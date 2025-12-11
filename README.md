@@ -151,6 +151,17 @@ python run.py
 
 应用将在 http://localhost:5000 启动。
 
+**开发模式**：设置环境变量 `FLASK_DEBUG=True` 启用调试模式（仅用于开发）：
+```bash
+# Windows (PowerShell)
+$env:FLASK_DEBUG="True"
+
+# macOS/Linux
+export FLASK_DEBUG=True
+```
+
+**注意**：生产环境请使用 WSGI 服务器（如 gunicorn 或 uwsgi）而非 Flask 内置服务器。
+
 ## 使用说明
 
 ### 基本使用

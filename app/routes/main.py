@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template
+from app import db
 from app.models import Problem, Tag, Function
 from app.services.review import ReviewService
 from sqlalchemy import func
@@ -79,5 +80,3 @@ def index():
                          top_functions=top_functions,
                          recent_problems=recent_problems_list,
                          due_reviews_count=len(due_reviews))
-
-from app import db
