@@ -204,3 +204,29 @@ function formatRelativeTime(dateString) {
     if (minutes > 0) return `${minutes}分钟前`;
     return '刚刚';
 }
+
+// 一键添加函数到库（通用函数）
+async function addFunctionToLibrary(funcName, category, description = '', syntax = '', example = '') {
+    try {
+        const response = await fetch('/functions/quick-add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: funcName,
+                category: category,
+                description: description || `自动添加的函数`,
+                syntax: syntax,
+                example: example
+            })
+        });
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('添加函数失败：', error);
+        return { success: false, message: error.message };
+    }
+}
+

@@ -173,11 +173,18 @@ function displayResult(data) {
     
     if (data.recommended_functions && data.recommended_functions.length > 0) {
         html += '<h6><i class="bi bi-code"></i> 推荐的 Python 函数：</h6>';
-        html += '<ul class="mb-3">';
+        html += '<div class="list-group mb-3">';
         data.recommended_functions.forEach(func => {
-            html += `<li><code>${func}</code></li>`;
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <code>${func}</code>
+                    <button class="btn btn-sm btn-outline-primary" onclick="quickAddFunction('${func}')">
+                        <i class="bi bi-plus-lg"></i> 添加到函数库
+                    </button>
+                </div>
+            `;
         });
-        html += '</ul>';
+        html += '</div>';
     }
     
     if (data.templates && data.templates.length > 0) {
@@ -208,6 +215,57 @@ function displayResult(data) {
     // 代码高亮
     hljs.highlightAll();
 }
+
+// 快速添加函数到库
+async function quickAddFunction(funcName) {
+    // 猜测分类
+    let category = '其他';
+    const categoryMap = {
+        'collections': '哈希/队列',
+        'heapq': '堆',
+        'bisect': '二分',
+        'functools': '缓存',
+        'itertools': '迭代',
+        'math': '数学',
+        're': '正则表达式',
+    };
+    
+    const module = funcName.split('.')[0];
+    if (categoryMap[module]) {
+        category = categoryMap[module];
+    }
+    
+    try {
+        const response = await fetch('/functions/quick-add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: funcName,
+                category: category,
+                description: `从分析推荐中添加的函数`,
+                syntax: '',
+                example: ''
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('函数添加成功！');
+            // 可选：跳转到函数详情页
+            if (confirm('是否前往函数详情页完善信息？')) {
+                window.open(`/functions/${data.id}`, '_blank');
+            }
+        } else {
+            alert(data.message || '添加失败');
+        }
+    } catch (error) {
+        alert('添加失败：' + error.message);
+    }
+}
+
 </script>
 <!-- Marked.js for Markdown rendering -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

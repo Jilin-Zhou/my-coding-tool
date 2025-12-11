@@ -86,3 +86,28 @@ def increment_frequency(id):
     function.frequency += 1
     db.session.commit()
     return jsonify({'success': True, 'frequency': function.frequency})
+
+@bp.route('/quick-add', methods=['POST'])
+def quick_add():
+    """快速添加函数到库（从分析结果一键添加）"""
+    data = request.get_json()
+    name = data.get('name')
+    category = data.get('category')
+    
+    # 检查是否已存在
+    existing = Function.query.filter_by(name=name, language='python').first()
+    if existing:
+        return jsonify({'success': False, 'message': '函数已存在', 'id': existing.id})
+    
+    function = Function(
+        name=name,
+        language='python',
+        category=category,
+        description=data.get('description', ''),
+        syntax=data.get('syntax', ''),
+        example=data.get('example', '')
+    )
+    db.session.add(function)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'id': function.id, 'message': '添加成功'})
