@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}{{ problem.title }} - 题目详情{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ problem.title }}</h1>
+        <div>
+            <a href="{{ url_for('problems.edit', id=problem.id) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> 编辑
+            </a>
+            <a href="{{ url_for('problems.list') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+    </div>
+    
+    <!-- 题目信息 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> 题目信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>来源：</strong></div>
+                        <div class="col-md-9">{{ problem.source or '-' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>题号：</strong></div>
+                        <div class="col-md-9">{{ problem.problem_number or '-' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>难度：</strong></div>
+                        <div class="col-md-9">
+                            {% if problem.difficulty == 'Easy' %}
+                            <span class="badge bg-success">Easy</span>
+                            {% elif problem.difficulty == 'Medium' %}
+                            <span class="badge bg-warning text-dark">Medium</span>
+                            {% elif problem.difficulty == 'Hard' %}
+                            <span class="badge bg-danger">Hard</span>
+                            {% else %}
+                            <span class="badge bg-secondary">未分类</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>标签：</strong></div>
+                        <div class="col-md-9">
+                            {% if problem.tags %}
+                                {% for tag in problem.tags %}
+                                <span class="badge bg-{{ tag.color }} me-1">{{ tag.name }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">无</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>时间复杂度：</strong></div>
+                        <div class="col-md-9"><code>{{ problem.time_complexity or '-' }}</code></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-3"><strong>空间复杂度：</strong></div>
+                        <div class="col-md-9"><code>{{ problem.space_complexity or '-' }}</code></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3"><strong>创建时间：</strong></div>
+                        <div class="col-md-9">{{ problem.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 题目描述 -->
+            {% if problem.description %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-question-circle"></i> 题目描述</h5>
+                </div>
+                <div class="card-body">
+                    <div class="markdown-content">
+                        {{ problem.description_html|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 我的思路 -->
+            {% if problem.my_thoughts %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb"></i> 我的思路</h5>
+                </div>
+                <div class="card-body">
+                    <div class="markdown-content">
+                        {{ problem.my_thoughts_html|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 我的解答 -->
+            {% if problem.my_solution %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-code-square"></i> 我的解答</h5>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">{{ problem.my_solution }}</code></pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- 侧边栏 -->
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> 操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('problems.edit', id=problem.id) }}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> 编辑题目
+                        </a>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                            <i class="bi bi-trash"></i> 删除题目
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 复习信息 -->
+            {% if problem.reviews %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-alarm"></i> 复习信息</h5>
+                </div>
+                <div class="card-body">
+                    {% set review = problem.reviews[0] %}
+                    <p><strong>复习次数：</strong>{{ review.review_count }}</p>
+                    <p><strong>下次复习：</strong>{{ review.next_review_date.strftime('%Y-%m-%d') }}</p>
+                    {% if review.last_reviewed %}
+                    <p><strong>上次复习：</strong>{{ review.last_reviewed.strftime('%Y-%m-%d') }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('review.index') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-calendar-check"></i> 查看复习计划
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除题目 "{{ problem.title }}" 吗？此操作无法撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form method="post" action="{{ url_for('problems.delete', id=problem.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 代码高亮
+document.addEventListener('DOMContentLoaded', function() {
+    hljs.highlightAll();
+});
+
+function confirmDelete() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

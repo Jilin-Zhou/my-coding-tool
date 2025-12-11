@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ function.name }} - 函数详情{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><code>{{ function.name }}</code></h1>
+        <a href="{{ url_for('functions.list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 函数信息</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3"><strong>函数名：</strong></div>
+                        <div class="col-md-9"><code>{{ function.name }}</code></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3"><strong>语言：</strong></div>
+                        <div class="col-md-9">
+                            <span class="badge bg-primary">{{ function.language.upper() }}</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3"><strong>分类：</strong></div>
+                        <div class="col-md-9">{{ function.category or '-' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3"><strong>使用频率：</strong></div>
+                        <div class="col-md-9">
+                            <span class="badge bg-success">{{ function.frequency }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-code"></i> 语法</h5>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-{{ function.language }}">{{ function.syntax }}</code></pre>
+                </div>
+            </div>
+            
+            {% if function.description %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-text"></i> 描述</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ function.description }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if function.example %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-code-square"></i> 示例代码</h5>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-{{ function.language }}">{{ function.example }}</code></pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> 操作</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success w-100" onclick="incrementFrequency({{ function.id }})">
+                        <i class="bi bi-hand-thumbs-up"></i> 标记使用
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 代码高亮
+document.addEventListener('DOMContentLoaded', function() {
+    hljs.highlightAll();
+});
+
+function incrementFrequency(funcId) {
+    fetch(`/functions/${funcId}/increment`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

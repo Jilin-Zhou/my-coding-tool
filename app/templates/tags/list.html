@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}标签管理 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-tags"></i> 标签管理</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTagModal">
+            <i class="bi bi-plus-lg"></i> 创建标签
+        </button>
+    </div>
+    
+    {% if tag_stats %}
+    <div class="row">
+        {% for item in tag_stats %}
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">
+                            <span class="badge bg-{{ item.tag.color }}">{{ item.tag.name }}</span>
+                        </h5>
+                        <span class="badge bg-secondary">{{ item.count }}</span>
+                    </div>
+                    <div class="btn-group btn-group-sm w-100">
+                        <a href="{{ url_for('problems.list', tag=item.tag.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-list"></i> 查看题目
+                        </a>
+                        <button type="button" class="btn btn-outline-warning" onclick="editTag({{ item.tag.id }}, '{{ item.tag.name }}', '{{ item.tag.color }}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="confirmDelete({{ item.tag.id }}, '{{ item.tag.name }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 还没有创建标签。点击右上角按钮创建第一个标签吧！
+    </div>
+    {% endif %}
+    
+    <!-- 颜色说明 -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-palette"></i> 可用颜色</h5>
+        </div>
+        <div class="card-body">
+            <span class="badge bg-primary me-1">primary</span>
+            <span class="badge bg-secondary me-1">secondary</span>
+            <span class="badge bg-success me-1">success</span>
+            <span class="badge bg-danger me-1">danger</span>
+            <span class="badge bg-warning text-dark me-1">warning</span>
+            <span class="badge bg-info text-dark me-1">info</span>
+            <span class="badge bg-dark me-1">dark</span>
+        </div>
+    </div>
+</div>
+
+<!-- 创建标签模态框 -->
+<div class="modal fade" id="createTagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">创建标签</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ url_for('tags.create') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">标签名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">颜色</label>
+                        <select class="form-select" id="color" name="color">
+                            <option value="primary">Primary (蓝色)</option>
+                            <option value="secondary">Secondary (灰色)</option>
+                            <option value="success">Success (绿色)</option>
+                            <option value="danger">Danger (红色)</option>
+                            <option value="warning">Warning (黄色)</option>
+                            <option value="info">Info (青色)</option>
+                            <option value="dark">Dark (深色)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑标签模态框 -->
+<div class="modal fade" id="editTagModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑标签</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editTagForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">标签名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_color" class="form-label">颜色</label>
+                        <select class="form-select" id="edit_color" name="color">
+                            <option value="primary">Primary (蓝色)</option>
+                            <option value="secondary">Secondary (灰色)</option>
+                            <option value="success">Success (绿色)</option>
+                            <option value="danger">Danger (红色)</option>
+                            <option value="warning">Warning (黄色)</option>
+                            <option value="info">Info (青色)</option>
+                            <option value="dark">Dark (深色)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除标签 "<span id="deleteTagName"></span>" 吗？</p>
+                <p class="text-muted">此操作不会删除相关题目，只是移除标签。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form method="post" id="deleteForm" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editTag(id, name, color) {
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_color').value = color;
+    document.getElementById('editTagForm').action = `/tags/${id}/edit`;
+    const modal = new bootstrap.Modal(document.getElementById('editTagModal'));
+    modal.show();
+}
+
+function confirmDelete(id, name) {
+    document.getElementById('deleteTagName').textContent = name;
+    document.getElementById('deleteForm').action = `/tags/${id}/delete`;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

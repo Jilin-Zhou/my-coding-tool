@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}添加函数 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-plus-lg"></i> 添加函数</h1>
+        <a href="{{ url_for('functions.list') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post" action="{{ url_for('functions.create') }}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">函数名 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control font-monospace" id="name" name="name" required>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="language" class="form-label">编程语言</label>
+                        <select class="form-select" id="language" name="language">
+                            <option value="python" selected>Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="category" class="form-label">分类</label>
+                        <input type="text" class="form-control" id="category" name="category" placeholder="例如：排序, 哈希, 堆">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="syntax" class="form-label">语法</label>
+                    <textarea class="form-control font-monospace" id="syntax" name="syntax" rows="3" placeholder="函数语法"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">描述</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" placeholder="函数功能描述"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="example" class="form-label">示例代码</label>
+                    <textarea class="form-control font-monospace" id="example" name="example" rows="6" placeholder="示例代码"></textarea>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                    <a href="{{ url_for('functions.list') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

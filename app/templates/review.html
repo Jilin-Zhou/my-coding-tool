@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}复习提醒 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="bi bi-alarm"></i> 复习提醒</h1>
+    
+    <!-- 需要复习的题目 -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> 需要复习的题目 ({{ due_reviews|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if due_reviews %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>题目</th>
+                            <th>难度</th>
+                            <th>复习次数</th>
+                            <th>应复习日期</th>
+                            <th>上次复习</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in due_reviews %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('problems.detail', id=review.problem.id) }}">
+                                    {{ review.problem.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if review.problem.difficulty == 'Easy' %}
+                                <span class="badge bg-success">Easy</span>
+                                {% elif review.problem.difficulty == 'Medium' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                                {% elif review.problem.difficulty == 'Hard' %}
+                                <span class="badge bg-danger">Hard</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ review.review_count }}</td>
+                            <td>{{ review.next_review_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if review.last_reviewed %}
+                                {{ review.last_reviewed.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                未复习
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="{{ url_for('review.mark_reviewed', review_id=review.review_id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i> 已复习
+                                    </button>
+                                </form>
+                                <a href="{{ url_for('problems.detail', id=review.problem.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-success mb-0">
+                <i class="bi bi-check-circle"></i> 太棒了！目前没有需要复习的题目。
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 未来7天的复习计划 -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-calendar-week"></i> 未来7天复习计划 ({{ upcoming_reviews|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if upcoming_reviews %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>题目</th>
+                            <th>难度</th>
+                            <th>复习次数</th>
+                            <th>计划复习日期</th>
+                            <th>上次复习</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in upcoming_reviews %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('problems.detail', id=review.problem.id) }}">
+                                    {{ review.problem.title }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if review.problem.difficulty == 'Easy' %}
+                                <span class="badge bg-success">Easy</span>
+                                {% elif review.problem.difficulty == 'Medium' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                                {% elif review.problem.difficulty == 'Hard' %}
+                                <span class="badge bg-danger">Hard</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ review.review_count }}</td>
+                            <td>{{ review.next_review_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if review.last_reviewed %}
+                                {{ review.last_reviewed.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                未复习
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('problems.detail', id=review.problem.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> 查看
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> 未来7天没有安排复习计划。
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 复习说明 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 复习机制说明</h5>
+                </div>
+                <div class="card-body">
+                    <p>本工具采用艾宾浩斯遗忘曲线进行复习提醒：</p>
+                    <ul>
+                        <li>第1次复习：添加题目后 <strong>1天</strong></li>
+                        <li>第2次复习：第1次复习后 <strong>2天</strong></li>
+                        <li>第3次复习：第2次复习后 <strong>4天</strong></li>
+                        <li>第4次复习：第3次复习后 <strong>7天</strong></li>
+                        <li>第5次复习：第4次复习后 <strong>15天</strong></li>
+                        <li>第6次及以后：每隔 <strong>30天</strong> 复习一次</li>
+                    </ul>
+                    <p class="mb-0">点击"已复习"按钮后，系统会自动安排下次复习时间。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
