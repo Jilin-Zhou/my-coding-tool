@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from app.models import Problem, Tag
+from app.models import Problem, Tag, Function
 from app import db
 from app.services.review import ReviewService
+from app.services.code_parser import CodeParser
 import markdown
 
 bp = Blueprint('problems', __name__, url_prefix='/problems')
@@ -87,6 +88,7 @@ def create():
         time_complexity = request.form.get('time_complexity')
         space_complexity = request.form.get('space_complexity')
         tag_ids = request.form.getlist('tags')
+        function_ids = request.form.getlist('functions')
         
         # 验证必填字段
         if not title:
@@ -112,6 +114,14 @@ def create():
             if tag:
                 problem.tags.append(tag)
         
+        # 添加函数关联
+        for function_id in function_ids:
+            function = Function.query.get(function_id)
+            if function:
+                problem.functions.append(function)
+                # 增加函数使用频率
+                function.frequency += 1
+        
         db.session.add(problem)
         db.session.commit()
         
@@ -123,7 +133,8 @@ def create():
     
     # GET 请求，显示表单
     all_tags = Tag.query.all()
-    return render_template('problems/create.html', all_tags=all_tags)
+    all_functions = Function.query.filter_by(language='python').order_by(Function.category, Function.name).all()
+    return render_template('problems/create.html', all_tags=all_tags, all_functions=all_functions)
 
 @bp.route('/<int:id>/edit', methods=['GET', 'POST'])
 def edit(id):
@@ -150,13 +161,40 @@ def edit(id):
             if tag:
                 problem.tags.append(tag)
         
+        # 更新函数关联
+        function_ids = request.form.getlist('functions')
+        old_functions = set(f.id for f in problem.functions)
+        new_functions = set(int(fid) for fid in function_ids)
+        
+        # 减少移除函数的频率
+        removed_functions = old_functions - new_functions
+        for func_id in removed_functions:
+            func = Function.query.get(func_id)
+            if func and func.frequency > 0:
+                func.frequency -= 1
+        
+        # 增加新添加函数的频率
+        added_functions = new_functions - old_functions
+        for func_id in added_functions:
+            func = Function.query.get(func_id)
+            if func:
+                func.frequency += 1
+        
+        # 更新关联
+        problem.functions = []
+        for func_id in function_ids:
+            func = Function.query.get(func_id)
+            if func:
+                problem.functions.append(func)
+        
         db.session.commit()
         flash('题目更新成功！', 'success')
         return redirect(url_for('problems.detail', id=problem.id))
     
     # GET 请求，显示编辑表单
     all_tags = Tag.query.all()
-    return render_template('problems/edit.html', problem=problem, all_tags=all_tags)
+    all_functions = Function.query.filter_by(language='python').order_by(Function.category, Function.name).all()
+    return render_template('problems/edit.html', problem=problem, all_tags=all_tags, all_functions=all_functions)
 
 @bp.route('/<int:id>/delete', methods=['POST'])
 def delete(id):
@@ -166,3 +204,21 @@ def delete(id):
     db.session.commit()
     flash('题目已删除', 'info')
     return redirect(url_for('problems.list'))
+
+@bp.route('/parse-code', methods=['POST'])
+def parse_code():
+    """解析代码，提取使用的函数"""
+    code = request.json.get('code', '')
+    parser = CodeParser()
+    suggestions = parser.get_function_suggestions(code)
+    
+    # 检查每个函数是否已在库中
+    for suggestion in suggestions:
+        existing = Function.query.filter_by(
+            name=suggestion['name'], 
+            language='python'
+        ).first()
+        suggestion['in_library'] = existing is not None
+        suggestion['function_id'] = existing.id if existing else None
+    
+    return jsonify({'success': True, 'suggestions': suggestions})

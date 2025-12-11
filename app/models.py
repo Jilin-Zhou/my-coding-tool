@@ -7,6 +7,12 @@ problem_tags = db.Table('problem_tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
 )
 
+# 多对多关系：题目和函数
+problem_functions = db.Table('problem_functions',
+    db.Column('problem_id', db.Integer, db.ForeignKey('problem.id'), primary_key=True),
+    db.Column('function_id', db.Integer, db.ForeignKey('function.id'), primary_key=True)
+)
+
 class Problem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -24,6 +30,8 @@ class Problem(db.Model):
     # 关系
     tags = db.relationship('Tag', secondary=problem_tags, lazy='subquery',
                           backref=db.backref('problems', lazy=True))
+    functions = db.relationship('Function', secondary=problem_functions, lazy='subquery',
+                               backref=db.backref('problems', lazy=True))
     reviews = db.relationship('Review', backref='problem', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
