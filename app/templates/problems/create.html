@@ -184,6 +184,15 @@ document.getElementById('parseCodeBtn').addEventListener('click', async function
     }
 });
 
+function autoCheckFunctionCheckbox(functionId) {
+    const checkbox = document.getElementById('func' + functionId);
+    if (checkbox) {
+        checkbox.checked = true;
+        // 滚动到视图
+        checkbox.parentElement.parentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
 function displayParseResults(suggestions) {
     const resultDiv = document.getElementById('parseResult');
     const resultBody = document.getElementById('parseResultBody');
@@ -209,14 +218,8 @@ function displayParseResults(suggestions) {
         
         // 自动勾选已在库中的函数
         if (inLibrary && suggestion.function_id) {
-            setTimeout(() => {
-                const checkbox = document.getElementById('func' + suggestion.function_id);
-                if (checkbox) {
-                    checkbox.checked = true;
-                    // 滚动到视图
-                    checkbox.parentElement.parentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }, 100);
+            // Use requestAnimationFrame to ensure DOM is ready
+            requestAnimationFrame(() => autoCheckFunctionCheckbox(suggestion.function_id));
         }
     });
     

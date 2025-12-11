@@ -115,9 +115,9 @@ def create():
                 problem.tags.append(tag)
         
         # 添加函数关联
-        for function_id in function_ids:
-            function = Function.query.get(function_id)
-            if function:
+        if function_ids:
+            functions = Function.query.filter(Function.id.in_(function_ids)).all()
+            for function in functions:
                 problem.functions.append(function)
                 # 增加函数使用频率
                 function.frequency += 1
@@ -168,23 +168,24 @@ def edit(id):
         
         # 减少移除函数的频率
         removed_functions = old_functions - new_functions
-        for func_id in removed_functions:
-            func = Function.query.get(func_id)
-            if func and func.frequency > 0:
-                func.frequency -= 1
+        if removed_functions:
+            removed_funcs = Function.query.filter(Function.id.in_(removed_functions)).all()
+            for func in removed_funcs:
+                if func.frequency > 0:
+                    func.frequency -= 1
         
         # 增加新添加函数的频率
         added_functions = new_functions - old_functions
-        for func_id in added_functions:
-            func = Function.query.get(func_id)
-            if func:
+        if added_functions:
+            added_funcs = Function.query.filter(Function.id.in_(added_functions)).all()
+            for func in added_funcs:
                 func.frequency += 1
         
         # 更新关联
         problem.functions = []
-        for func_id in function_ids:
-            func = Function.query.get(func_id)
-            if func:
+        if function_ids:
+            functions = Function.query.filter(Function.id.in_(new_functions)).all()
+            for func in functions:
                 problem.functions.append(func)
         
         db.session.commit()

@@ -54,7 +54,7 @@ class CodeParser:
         
         # 2. 检测常见内置函数
         builtin_functions = [
-            'sorted', 'sort', 'enumerate', 'zip', 'map', 'filter',
+            'sorted', 'enumerate', 'zip', 'map', 'filter',
             'sum', 'max', 'min', 'abs', 'len', 'range', 'reversed',
             'any', 'all', 'isinstance', 'list', 'dict', 'set', 'tuple'
         ]
