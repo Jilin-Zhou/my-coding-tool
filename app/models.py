@@ -70,3 +70,17 @@ class Review(db.Model):
     
     def __repr__(self):
         return f'<Review for Problem {self.problem_id}>'
+
+class AIConfig(db.Model):
+    """AI 配置存储"""
+    id = db.Column(db.Integer, primary_key=True)
+    provider = db.Column(db.String(50), nullable=False)  # openai, gemini, openrouter, custom
+    api_key = db.Column(db.String(500))  # API密钥
+    model = db.Column(db.String(100))  # 模型名称
+    base_url = db.Column(db.String(200))  # 自定义 API 端点（可选）
+    is_active = db.Column(db.Boolean, default=True)  # 是否为当前使用的配置
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<AIConfig {self.provider}:{self.model}>'

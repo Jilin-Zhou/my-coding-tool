@@ -108,25 +108,92 @@ class BasicAnalyzer:
         }
 
 class AIAnalyzer:
-    """基于 OpenAI API 的增强分析器"""
+    """支持多供应商的 AI 分析器"""
     
-    def __init__(self):
-        self.api_key = Config.OPENAI_API_KEY
-        self.model = Config.OPENAI_MODEL
+    def __init__(self, config=None):
+        """
+        初始化 AI 分析器
+        
+        Args:
+            config: AIConfig 模型实例，如果为 None 则使用环境变量配置
+        """
+        self.config = config
+        self.client = None
+        
+        # 如果没有传入配置，尝试使用环境变量（向后兼容）
+        if not config:
+            from config import Config as AppConfig
+            if AppConfig.OPENAI_API_KEY:
+                # 创建临时配置对象
+                class TempConfig:
+                    provider = 'openai'
+                    api_key = AppConfig.OPENAI_API_KEY
+                    model = AppConfig.OPENAI_MODEL
+                    base_url = None
+                self.config = TempConfig()
+        
+        if self.config:
+            self._init_client()
+    
+    def _init_client(self):
+        """根据供应商初始化客户端"""
+        if not self.config:
+            return
+            
+        provider = self.config.provider
+        
+        if provider == 'openai':
+            from openai import OpenAI
+            self.client = OpenAI(api_key=self.config.api_key)
+            
+        elif provider == 'gemini':
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.config.api_key)
+                self.client = genai.GenerativeModel(self.config.model)
+            except ImportError:
+                print("警告：google-generativeai 未安装，无法使用 Gemini")
+                self.client = None
+            
+        elif provider in ['openrouter', 'custom']:
+            from openai import OpenAI
+            from app.services.ai_providers import AI_PROVIDERS
+            base_url = self.config.base_url or AI_PROVIDERS.get(provider, {}).get('base_url')
+            self.client = OpenAI(
+                api_key=self.config.api_key,
+                base_url=base_url
+            )
     
     def is_available(self):
         """检查 AI 分析是否可用"""
-        return bool(self.api_key)
+        return bool(self.config and self.client)
+    
+    def test_connection(self):
+        """测试 API 连接"""
+        if not self.config or not self.client:
+            return {'success': False, 'message': '未配置 AI 客户端'}
+        
+        try:
+            if self.config.provider == 'gemini':
+                response = self.client.generate_content("Hello")
+                return {'success': True, 'message': '连接成功！'}
+            else:
+                # OpenAI 兼容接口
+                response = self.client.chat.completions.create(
+                    model=self.config.model,
+                    messages=[{"role": "user", "content": "Hi"}],
+                    max_tokens=5
+                )
+                return {'success': True, 'message': '连接成功！'}
+        except Exception as e:
+            return {'success': False, 'message': f'连接失败: {str(e)}'}
     
     def analyze(self, title, description, my_solution=""):
-        """使用 OpenAI API 分析题目"""
+        """使用配置的 AI 进行分析"""
         if not self.is_available():
             return None
         
         try:
-            from openai import OpenAI
-            client = OpenAI(api_key=self.api_key)
-            
             prompt = f"""作为算法专家，请分析以下编程题目：
 
 标题：{title}
@@ -141,18 +208,24 @@ class AIAnalyzer:
 
 请以简洁的中文回答，使用 Markdown 格式。"""
             
-            response = client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "你是一个专业的算法题目分析助手，擅长分析编程题目并提供解题建议。"},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=1000,
-                temperature=0.7
-            )
+            if self.config.provider == 'gemini':
+                response = self.client.generate_content(prompt)
+                analysis = response.text
+            else:
+                # OpenAI 兼容接口
+                response = self.client.chat.completions.create(
+                    model=self.config.model,
+                    messages=[
+                        {"role": "system", "content": "你是一个专业的算法题目分析助手，擅长分析编程题目并提供解题建议。"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=1000,
+                    temperature=0.7
+                )
+                analysis = response.choices[0].message.content
             
             return {
-                "analysis": response.choices[0].message.content,
+                "analysis": analysis,
                 "analysis_type": "ai"
             }
         except Exception as e:
@@ -162,9 +235,15 @@ class AIAnalyzer:
 class HybridAnalyzer:
     """混合分析器：结合基础分析和 AI 分析"""
     
-    def __init__(self):
+    def __init__(self, ai_config=None):
+        """
+        初始化混合分析器
+        
+        Args:
+            ai_config: AIConfig 模型实例，如果为 None 则尝试使用环境变量
+        """
         self.basic_analyzer = BasicAnalyzer()
-        self.ai_analyzer = AIAnalyzer()
+        self.ai_analyzer = AIAnalyzer(ai_config)
     
     def analyze(self, title, description, my_solution="", use_ai=False):
         """

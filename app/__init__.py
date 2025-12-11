@@ -11,7 +11,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     
     # 注册蓝图
-    from app.routes import main, problems, functions, tags, analysis, stats, review
+    from app.routes import main, problems, functions, tags, analysis, stats, review, ai_config
     app.register_blueprint(main.bp)
     app.register_blueprint(problems.bp)
     app.register_blueprint(functions.bp)
@@ -19,5 +19,6 @@ def create_app(config_class=Config):
     app.register_blueprint(analysis.bp)
     app.register_blueprint(stats.bp)
     app.register_blueprint(review.bp)
+    app.register_blueprint(ai_config.bp)
     
     return app
