@@ -1,0 +1,225 @@
+/* 自定义样式 */
+
+:root {
+    --bs-body-bg: #f8f9fa;
+    --bs-body-color: #212529;
+}
+
+[data-theme="dark"] {
+    --bs-body-bg: #212529;
+    --bs-body-color: #f8f9fa;
+}
+
+body {
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* 代码高亮样式调整 */
+pre {
+    border-radius: 0.375rem;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+pre code {
+    font-size: 0.875rem;
+}
+
+/* Markdown 内容样式 */
+.markdown-content {
+    line-height: 1.6;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content h1 {
+    font-size: 1.75rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+}
+
+.markdown-content h2 {
+    font-size: 1.5rem;
+}
+
+.markdown-content h3 {
+    font-size: 1.25rem;
+}
+
+.markdown-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+}
+
+.markdown-content pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1rem;
+}
+
+.markdown-content blockquote {
+    border-left: 4px solid #dee2e6;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+}
+
+/* 卡片样式增强 */
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* 表格响应式优化 */
+.table-responsive {
+    border-radius: 0.375rem;
+}
+
+/* 徽章样式 */
+.badge {
+    font-weight: 500;
+}
+
+/* 导航栏活跃链接 */
+.navbar-nav .nav-link.active {
+    font-weight: bold;
+    border-bottom: 2px solid #fff;
+}
+
+/* 按钮组样式 */
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* 主题切换按钮 */
+#themeToggle {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 表单标签必填标记 */
+.form-label .text-danger {
+    font-weight: bold;
+}
+
+/* 加载动画 */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* 深色模式特定样式 */
+[data-theme="dark"] .card {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+[data-theme="dark"] .table {
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+    background-color: #495057;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #495057;
+    border-color: #80bdff;
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .markdown-content code {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #495057 !important;
+}
+
+/* 图表容器 */
+canvas {
+    max-height: 300px;
+}
+
+/* 滚动条美化（仅 WebKit 浏览器）*/
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #2d3238;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #5a6268;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}

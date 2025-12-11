@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}编辑题目 - {{ problem.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-pencil"></i> 编辑题目</h1>
+        <a href="{{ url_for('problems.detail', id=problem.id) }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回详情
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post" action="{{ url_for('problems.edit', id=problem.id) }}">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label for="title" class="form-label">题目标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ problem.title }}" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="difficulty" class="form-label">难度</label>
+                        <select class="form-select" id="difficulty" name="difficulty">
+                            <option value="">未分类</option>
+                            <option value="Easy" {% if problem.difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+                            <option value="Medium" {% if problem.difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="Hard" {% if problem.difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="source" class="form-label">来源</label>
+                        <input type="text" class="form-control" id="source" name="source" value="{{ problem.source or '' }}" placeholder="例如：LeetCode, Codeforces">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="problem_number" class="form-label">题号</label>
+                        <input type="text" class="form-control" id="problem_number" name="problem_number" value="{{ problem.problem_number or '' }}" placeholder="例如：1, 2, 3">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">题目描述（支持 Markdown）</label>
+                    <textarea class="form-control" id="description" name="description" rows="6">{{ problem.description or '' }}</textarea>
+                    <small class="text-muted">支持 Markdown 格式，使用 ``` 包裹代码块</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="my_thoughts" class="form-label">我的思路（支持 Markdown）</label>
+                    <textarea class="form-control" id="my_thoughts" name="my_thoughts" rows="6">{{ problem.my_thoughts or '' }}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="my_solution" class="form-label">我的解答</label>
+                    <textarea class="form-control font-monospace" id="my_solution" name="my_solution" rows="10">{{ problem.my_solution or '' }}</textarea>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="time_complexity" class="form-label">时间复杂度</label>
+                        <input type="text" class="form-control" id="time_complexity" name="time_complexity" value="{{ problem.time_complexity or '' }}" placeholder="例如：O(n)">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="space_complexity" class="form-label">空间复杂度</label>
+                        <input type="text" class="form-control" id="space_complexity" name="space_complexity" value="{{ problem.space_complexity or '' }}" placeholder="例如：O(1)">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">标签</label>
+                    <div class="row">
+                        {% for tag in all_tags %}
+                        <div class="col-md-3 col-sm-4 col-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag{{ tag.id }}"
+                                    {% if tag in problem.tags %}checked{% endif %}>
+                                <label class="form-check-label" for="tag{{ tag.id }}">
+                                    {{ tag.name }}
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 更新
+                    </button>
+                    <a href="{{ url_for('problems.detail', id=problem.id) }}" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

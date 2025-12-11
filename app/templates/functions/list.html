@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}函数库 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-code-slash"></i> 函数库</h1>
+        <a href="{{ url_for('functions.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> 添加函数
+        </a>
+    </div>
+    
+    <!-- 筛选 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('functions.list') }}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">编程语言</label>
+                        <select name="language" class="form-select" onchange="this.form.submit()">
+                            <option value="python" {% if current_language == 'python' %}selected{% endif %}>Python</option>
+                            <option value="java" {% if current_language == 'java' %}selected{% endif %}>Java</option>
+                            <option value="cpp" {% if current_language == 'cpp' %}selected{% endif %}>C++</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">分类</label>
+                        <select name="category" class="form-select" onchange="this.form.submit()">
+                            <option value="">全部分类</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">排序</label>
+                        <select name="sort" class="form-select" onchange="this.form.submit()">
+                            <option value="category" {% if current_sort == 'category' %}selected{% endif %}>按分类</option>
+                            <option value="frequency" {% if current_sort == 'frequency' %}selected{% endif %}>按频率</option>
+                            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>按名称</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 函数列表 -->
+    {% if functions %}
+    <div class="row">
+        {% set current_category = '' %}
+        {% for func in functions %}
+            {% if current_sort == 'category' and func.category != current_category %}
+                {% set current_category = func.category %}
+                <div class="col-12 mt-4 mb-2">
+                    <h4 class="text-primary"><i class="bi bi-folder"></i> {{ func.category or '未分类' }}</h4>
+                    <hr>
+                </div>
+            {% endif %}
+            
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><code>{{ func.name }}</code></h6>
+                        <span class="badge bg-secondary">{{ func.frequency }}</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-2"><small>{{ func.category }}</small></p>
+                        <p class="mb-2"><strong>语法：</strong></p>
+                        <pre class="bg-light p-2 rounded"><code class="language-{{ func.language }}">{{ func.syntax }}</code></pre>
+                        {% if func.description %}
+                        <p class="mb-0"><small>{{ func.description[:100] }}{% if func.description|length > 100 %}...{% endif %}</small></p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('functions.detail', id=func.id) }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> 查看详情
+                            </a>
+                            <button class="btn btn-sm btn-outline-success" onclick="incrementFrequency({{ func.id }}, this)">
+                                <i class="bi bi-hand-thumbs-up"></i> 使用
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 暂无函数数据。<a href="{{ url_for('functions.create') }}">添加第一个函数</a>吧！
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function incrementFrequency(funcId, button) {
+    fetch(`/functions/${funcId}/increment`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const badge = button.closest('.card').querySelector('.badge');
+            badge.textContent = data.frequency;
+            
+            // 临时禁用按钮
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-check"></i> 已记录';
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = '<i class="bi bi-hand-thumbs-up"></i> 使用';
+            }, 2000);
+        }
+    });
+}
+
+// 代码高亮
+document.addEventListener('DOMContentLoaded', function() {
+    hljs.highlightAll();
+});
+</script>
+{% endblock %}

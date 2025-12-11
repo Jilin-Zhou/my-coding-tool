@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}题目列表 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-list-task"></i> 题目列表</h1>
+        <a href="{{ url_for('problems.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> 添加题目
+        </a>
+    </div>
+    
+    <!-- 筛选和搜索 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ url_for('problems.list') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">难度</label>
+                        <select name="difficulty" class="form-select">
+                            <option value="">全部</option>
+                            <option value="Easy" {% if current_difficulty == 'Easy' %}selected{% endif %}>Easy</option>
+                            <option value="Medium" {% if current_difficulty == 'Medium' %}selected{% endif %}>Medium</option>
+                            <option value="Hard" {% if current_difficulty == 'Hard' %}selected{% endif %}>Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">来源</label>
+                        <select name="source" class="form-select">
+                            <option value="">全部</option>
+                            {% for source in all_sources %}
+                            <option value="{{ source }}" {% if current_source == source %}selected{% endif %}>{{ source }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">标签</label>
+                        <select name="tag" class="form-select">
+                            <option value="">全部</option>
+                            {% for tag in all_tags %}
+                            <option value="{{ tag.id }}" {% if current_tag == tag.id|string %}selected{% endif %}>{{ tag.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">搜索</label>
+                        <input type="text" name="search" class="form-control" placeholder="搜索标题或描述" value="{{ current_search or '' }}">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> 筛选
+                        </button>
+                        <a href="{{ url_for('problems.list') }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> 清除
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 题目列表 -->
+    {% if problems %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>来源</th>
+                            <th>题号</th>
+                            <th>难度</th>
+                            <th>标签</th>
+                            <th>复杂度</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for problem in problems %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('problems.detail', id=problem.id) }}" class="text-decoration-none">
+                                    <strong>{{ problem.title }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ problem.source or '-' }}</td>
+                            <td>{{ problem.problem_number or '-' }}</td>
+                            <td>
+                                {% if problem.difficulty == 'Easy' %}
+                                <span class="badge bg-success">Easy</span>
+                                {% elif problem.difficulty == 'Medium' %}
+                                <span class="badge bg-warning text-dark">Medium</span>
+                                {% elif problem.difficulty == 'Hard' %}
+                                <span class="badge bg-danger">Hard</span>
+                                {% else %}
+                                <span class="badge bg-secondary">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for tag in problem.tags[:3] %}
+                                <span class="badge bg-{{ tag.color }} me-1">{{ tag.name }}</span>
+                                {% endfor %}
+                                {% if problem.tags|length > 3 %}
+                                <span class="badge bg-secondary">+{{ problem.tags|length - 3 }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if problem.time_complexity %}T: {{ problem.time_complexity }}{% endif %}
+                                    {% if problem.space_complexity %}<br>S: {{ problem.space_complexity }}{% endif %}
+                                </small>
+                            </td>
+                            <td>{{ problem.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('problems.detail', id=problem.id) }}" class="btn btn-outline-primary" title="查看">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('problems.edit', id=problem.id) }}" class="btn btn-outline-warning" title="编辑">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" onclick="confirmDelete({{ problem.id }})" title="删除">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 暂无题目记录。<a href="{{ url_for('problems.create') }}">添加第一道题目</a>吧！
+    </div>
+    {% endif %}
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除这道题目吗？此操作无法撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(problemId) {
+    const form = document.getElementById('deleteForm');
+    form.action = `/problems/${problemId}/delete`;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

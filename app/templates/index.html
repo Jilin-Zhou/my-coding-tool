@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4"><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    
+    <!-- 概览卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">刷题总数</h6>
+                            <h2 class="card-title mb-0">{{ total_problems }}</h2>
+                        </div>
+                        <i class="bi bi-list-task fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">需要复习</h6>
+                            <h2 class="card-title mb-0">{{ due_reviews_count }}</h2>
+                        </div>
+                        <i class="bi bi-alarm fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">函数库</h6>
+                            <h2 class="card-title mb-0">{{ top_functions|length }}</h2>
+                        </div>
+                        <i class="bi bi-code-slash fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2">本周新增</h6>
+                            <h2 class="card-title mb-0">{{ trend_data.data[-7:]|sum if trend_data.data else 0 }}</h2>
+                        </div>
+                        <i class="bi bi-graph-up fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> 刷题趋势（最近7天）</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> 难度分布</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="difficultyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> 标签分布 Top 10</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="tagChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-star"></i> 高频函数 Top 10</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_functions %}
+                    <div class="list-group">
+                        {% for func in top_functions %}
+                        <a href="{{ url_for('functions.detail', id=func.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ func.name }}</strong>
+                                <small class="text-muted d-block">{{ func.category }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ func.frequency }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">暂无函数数据</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 最近题目 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 最近刷题</h5>
+                    <a href="{{ url_for('problems.create') }}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i> 添加题目
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_problems %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>标题</th>
+                                    <th>来源</th>
+                                    <th>难度</th>
+                                    <th>标签</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for problem in recent_problems %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('problems.detail', id=problem.id) }}">
+                                            {{ problem.title }}
+                                        </a>
+                                    </td>
+                                    <td>{{ problem.source or '-' }}</td>
+                                    <td>
+                                        {% if problem.difficulty == 'Easy' %}
+                                        <span class="badge bg-success">Easy</span>
+                                        {% elif problem.difficulty == 'Medium' %}
+                                        <span class="badge bg-warning">Medium</span>
+                                        {% elif problem.difficulty == 'Hard' %}
+                                        <span class="badge bg-danger">Hard</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% for tag in problem.tags[:3] %}
+                                        <span class="badge bg-{{ tag.color }}">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>{{ problem.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('problems.detail', id=problem.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">还没有刷题记录，<a href="{{ url_for('problems.create') }}">添加第一道题目</a>吧！</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 刷题趋势图
+const trendCtx = document.getElementById('trendChart');
+if (trendCtx) {
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ trend_data.labels|tojson }},
+            datasets: [{
+                label: '刷题数量',
+                data: {{ trend_data.data|tojson }},
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 难度分布饼图
+const diffCtx = document.getElementById('difficultyChart');
+if (diffCtx) {
+    new Chart(diffCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ difficulty_data.labels|tojson }},
+            datasets: [{
+                data: {{ difficulty_data.data|tojson }},
+                backgroundColor: [
+                    'rgb(25, 135, 84)',  // Easy - green
+                    'rgb(255, 193, 7)',  // Medium - yellow
+                    'rgb(220, 53, 69)',  // Hard - red
+                    'rgb(108, 117, 125)' // Other - gray
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+}
+
+// 标签分布柱状图
+const tagCtx = document.getElementById('tagChart');
+if (tagCtx) {
+    new Chart(tagCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ tag_data.labels|tojson }},
+            datasets: [{
+                label: '题目数量',
+                data: {{ tag_data.data|tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

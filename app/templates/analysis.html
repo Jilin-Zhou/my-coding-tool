@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}智能分析 - 刷题辅助工具{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-lightbulb"></i> 智能分析</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pencil"></i> 输入题目信息</h5>
+                </div>
+                <div class="card-body">
+                    <form id="analysisForm">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">题目标题</label>
+                            <input type="text" class="form-control" id="title" placeholder="例如：两数之和">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">题目描述</label>
+                            <textarea class="form-control" id="description" rows="6" placeholder="题目描述..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="my_solution" class="form-label">我的解答（可选）</label>
+                            <textarea class="form-control font-monospace" id="my_solution" rows="6" placeholder="# Python 代码"></textarea>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="use_ai">
+                            <label class="form-check-label" for="use_ai">
+                                使用 AI 增强分析（需要配置 API Key）
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> 分析题目
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> 分析结果</h5>
+                </div>
+                <div class="card-body" id="analysisResult">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-lightbulb fs-1"></i>
+                        <p class="mt-3">在左侧输入题目信息，点击"分析题目"查看分析结果</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> 使用说明</h5>
+                </div>
+                <div class="card-body">
+                    <h6>基础分析（默认）：</h6>
+                    <ul>
+                        <li>基于关键词匹配识别题目类型</li>
+                        <li>推荐相关的算法和数据结构</li>
+                        <li>提供 Python 函数建议和代码模板</li>
+                        <li>完全离线可用，无需 API Key</li>
+                    </ul>
+                    
+                    <h6>AI 增强分析（可选）：</h6>
+                    <ul>
+                        <li>使用 OpenAI GPT 模型进行深度分析</li>
+                        <li>更精准的算法推荐和思路反馈</li>
+                        <li>需要在配置文件中设置 OPENAI_API_KEY</li>
+                        <li>如果 API 调用失败，自动降级到基础分析</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    const my_solution = document.getElementById('my_solution').value;
+    const use_ai = document.getElementById('use_ai').checked;
+    
+    if (!title && !description) {
+        alert('请至少填写标题或描述');
+        return;
+    }
+    
+    // 显示加载状态
+    const resultDiv = document.getElementById('analysisResult');
+    resultDiv.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">分析中...</span>
+            </div>
+            <p class="mt-3">正在分析题目...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch('/analysis/analyze', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title,
+                description,
+                my_solution,
+                use_ai
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayResult(data);
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> ${data.error || '分析失败'}
+                </div>
+            `;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> 请求失败：${error.message}
+            </div>
+        `;
+    }
+});
+
+function displayResult(data) {
+    const resultDiv = document.getElementById('analysisResult');
+    let html = '';
+    
+    // 分析类型标识
+    const typeLabels = {
+        'basic': '<span class="badge bg-info">基础分析</span>',
+        'ai': '<span class="badge bg-success">AI 分析</span>',
+        'hybrid': '<span class="badge bg-primary">混合分析</span>'
+    };
+    
+    html += `<div class="mb-3">${typeLabels[data.analysis_type] || ''}</div>`;
+    
+    // 基础分析结果
+    if (data.algorithm_types && data.algorithm_types.length > 0) {
+        html += '<h6><i class="bi bi-tags"></i> 识别的算法类型：</h6>';
+        html += '<div class="mb-3">';
+        data.algorithm_types.forEach(type => {
+            html += `<span class="badge bg-primary me-1">${type}</span>`;
+        });
+        html += '</div>';
+    }
+    
+    if (data.recommended_functions && data.recommended_functions.length > 0) {
+        html += '<h6><i class="bi bi-code"></i> 推荐的 Python 函数：</h6>';
+        html += '<ul class="mb-3">';
+        data.recommended_functions.forEach(func => {
+            html += `<li><code>${func}</code></li>`;
+        });
+        html += '</ul>';
+    }
+    
+    if (data.templates && data.templates.length > 0) {
+        html += '<h6><i class="bi bi-file-code"></i> 代码模板：</h6>';
+        data.templates.forEach(template => {
+            html += `<div class="mb-3">`;
+            html += `<strong>${template.type}：</strong>`;
+            template.templates.forEach(t => {
+                html += `<pre class="bg-light p-3 mt-2"><code class="language-python">${t}</code></pre>`;
+            });
+            html += `</div>`;
+        });
+    }
+    
+    // AI 分析结果
+    if (data.ai_analysis) {
+        html += '<hr>';
+        html += '<h6><i class="bi bi-robot"></i> AI 深度分析：</h6>';
+        html += `<div class="markdown-content">${marked.parse(data.ai_analysis)}</div>`;
+    }
+    
+    if (!html) {
+        html = '<div class="alert alert-warning">未能识别题目类型，请尝试提供更多信息</div>';
+    }
+    
+    resultDiv.innerHTML = html;
+    
+    // 代码高亮
+    hljs.highlightAll();
+}
+</script>
+<!-- Marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
