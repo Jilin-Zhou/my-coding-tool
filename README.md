@@ -280,7 +280,8 @@ my-coding-tool/
 
 ## 截图
 
-（预留位置 - 待添加实际截图）
+<img width="3112" height="1808" alt="image" src="https://github.com/user-attachments/assets/f3e4cdfd-8091-424c-9c1a-db2f08520102" />
+
 
 ## 开发计划
 
